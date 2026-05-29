@@ -286,6 +286,14 @@ nav::-webkit-scrollbar{display:none}
 .region-card-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .region-card-grape{font-size:12px;color:var(--text2);margin-bottom:4px;line-height:1.5}
 .region-card-note{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* Map controls */
+.map-zoom-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:4px 10px;font-size:16px;cursor:pointer;font-family:inherit;line-height:1;font-weight:600}
+.map-zoom-btn:active{background:rgba(255,255,255,.25)}
+.map-filter-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.map-filter-row::-webkit-scrollbar{display:none}
+.map-pill{flex-shrink:0;padding:6px 12px;border-radius:16px;border:1px solid var(--border2);background:var(--surface);color:var(--text3);font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap}
+.map-pill.active{background:var(--navy);border-color:var(--navy);color:#fff}
 </style>
 </head>
 <body>
@@ -475,286 +483,40 @@ nav::-webkit-scrollbar{display:none}
 <!-- WINE REGIONS SECTION -->
 <div class="rs2">
 <div class="rst">🗺 World Wine Regions</div>
+
 <div class="map-wrap">
   <div class="map-header">
-    <div class="map-title">Interactive Wine Map</div>
-    <div class="map-subtitle" id="map-hint">Tap a region to explore</div>
+    <div>
+      <div class="map-title">Interactive Wine Map</div>
+      <div class="map-subtitle" id="map-hint">Pinch to zoom · Drag to pan · Tap a pin</div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="map-zoom-btn" onclick="mapZoom(1.4)">＋</button>
+      <button class="map-zoom-btn" onclick="mapZoom(0.7)">－</button>
+      <button class="map-zoom-btn" onclick="mapReset()">↺</button>
+    </div>
   </div>
-  <div class="map-svg-wrap" style="background:#D6E8F5;position:relative">
-    <svg id="wine-map" viewBox="0 0 500 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;font-family:-apple-system,sans-serif">
 
-      <!-- Ocean background -->
-      <rect width="500" height="280" fill="#B8D4E8"/>
+  <!-- Region filter pills -->
+  <div class="map-filter-row">
+    <button class="map-pill active" onclick="mapFilter('all',this)">All</button>
+    <button class="map-pill" onclick="mapFilter('europe',this)">🇪🇺 Europe</button>
+    <button class="map-pill" onclick="mapFilter('americas',this)">🌎 Americas</button>
+    <button class="map-pill" onclick="mapFilter('oceania',this)">🌏 Oceania</button>
+    <button class="map-pill" onclick="mapFilter('africa',this)">🌍 Africa</button>
+  </div>
 
-      <!-- === CONTINENTS (simplified but recognisable shapes) === -->
-
-      <!-- North America -->
-      <path d="M 30 20 L 130 20 L 140 30 L 145 50 L 135 70 L 125 90 L 115 110 L 100 125 L 85 130 L 70 125 L 55 110 L 40 90 L 28 65 L 25 40 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-
-      <!-- Greenland -->
-      <ellipse cx="145" cy="18" rx="18" ry="12" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Central America + Caribbean -->
-      <path d="M 100 125 L 115 130 L 118 140 L 110 145 L 100 140 L 95 132 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- South America -->
-      <path d="M 110 148 L 130 148 L 145 158 L 150 175 L 148 200 L 140 225 L 125 245 L 112 255 L 100 248 L 90 232 L 85 210 L 88 185 L 95 165 L 100 152 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-
-      <!-- Europe -->
-      <path d="M 215 25 L 245 22 L 258 28 L 262 38 L 255 48 L 248 52 L 240 58 L 232 62 L 225 58 L 218 52 L 212 42 L 213 32 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-      <!-- Iberian Peninsula -->
-      <path d="M 215 55 L 228 52 L 232 60 L 228 70 L 218 72 L 212 65 L 213 57 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-      <!-- Italy boot -->
-      <path d="M 243 55 L 248 58 L 250 68 L 247 78 L 244 72 L 241 65 L 241 58 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-      <!-- Scandinavia -->
-      <path d="M 240 15 L 252 12 L 258 20 L 252 28 L 244 26 L 238 20 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Africa -->
-      <path d="M 220 78 L 252 75 L 268 85 L 272 105 L 270 130 L 262 155 L 248 175 L 235 185 L 220 182 L 208 170 L 200 148 L 198 125 L 202 100 L 210 85 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-
-      <!-- Middle East -->
-      <path d="M 270 60 L 298 58 L 305 68 L 298 80 L 278 82 L 268 75 L 268 65 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Asia (simplified) -->
-      <path d="M 300 20 L 430 18 L 445 30 L 448 50 L 440 70 L 420 80 L 395 78 L 370 72 L 348 68 L 325 65 L 308 58 L 298 45 L 298 30 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-
-      <!-- India -->
-      <path d="M 340 80 L 358 78 L 365 92 L 362 110 L 352 120 L 340 112 L 335 95 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Southeast Asia -->
-      <path d="M 395 80 L 415 82 L 420 92 L 412 98 L 398 95 L 392 88 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Australia -->
-      <path d="M 390 158 L 438 155 L 455 165 L 458 185 L 450 205 L 432 215 L 408 218 L 388 208 L 378 190 L 378 172 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.8"/>
-
-      <!-- New Zealand -->
-      <path d="M 458 185 L 465 182 L 470 192 L 467 205 L 460 205 L 456 196 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-      <path d="M 463 210 L 468 208 L 472 218 L 468 226 L 462 224 L 460 216 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- Japan/Korea -->
-      <path d="M 430 42 L 440 40 L 445 48 L 440 56 L 432 54 L 428 48 Z" fill="#C8D8B0" stroke="#A8B890" stroke-width="0.5"/>
-
-      <!-- === WINE REGION MARKERS === -->
-
-      <!-- FRANCE regions -->
-      <g id="mr-france" onclick="mapRegion('france')" style="cursor:pointer">
-        <circle cx="228" cy="52" r="9" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="228" y="48" text-anchor="middle" font-size="7" fill="white" font-weight="bold">FR</text>
-        <text x="228" y="57" text-anchor="middle" font-size="5" fill="rgba(255,255,255,0.85)">France</text>
-      </g>
-
-      <!-- Champagne dot -->
-      <g id="mr-champagne" onclick="mapRegion('champagne')" style="cursor:pointer">
-        <circle cx="235" cy="38" r="5" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="235" y="34" text-anchor="middle" font-size="4.5" fill="white" font-weight="bold">Ch</text>
-        <text x="247" y="38" text-anchor="start" font-size="4.5" fill="#1B2A4A" font-weight="600">Champagne</text>
-      </g>
-
-      <!-- Burgundy dot -->
-      <g id="mr-burgundy" onclick="mapRegion('burgundy')" style="cursor:pointer">
-        <circle cx="237" cy="48" r="5" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="237" y="44" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Bu</text>
-        <text x="244" y="48" text-anchor="start" font-size="4.5" fill="#1B2A4A" font-weight="600">Burgundy</text>
-      </g>
-
-      <!-- Bordeaux dot -->
-      <g id="mr-bordeaux" onclick="mapRegion('bordeaux')" style="cursor:pointer">
-        <circle cx="222" cy="57" r="5" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="222" y="53" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Bd</text>
-        <text x="210" y="57" text-anchor="end" font-size="4.5" fill="#1B2A4A" font-weight="600">Bordeaux</text>
-      </g>
-
-      <!-- Rhone dot -->
-      <g id="mr-rhone" onclick="mapRegion('rhone')" style="cursor:pointer">
-        <circle cx="237" cy="57" r="5" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="237" y="53" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Rh</text>
-        <text x="244" y="58" text-anchor="start" font-size="4.5" fill="#1B2A4A" font-weight="600">Rhône</text>
-      </g>
-
-      <!-- Alsace dot -->
-      <g id="mr-alsace" onclick="mapRegion('alsace')" style="cursor:pointer">
-        <circle cx="244" cy="45" r="4" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="244" y="42" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Al</text>
-        <text x="249" y="46" text-anchor="start" font-size="4" fill="#1B2A4A">Alsace</text>
-      </g>
-
-      <!-- Loire dot -->
-      <g id="mr-loire" onclick="mapRegion('loire')" style="cursor:pointer">
-        <circle cx="224" cy="48" r="4" fill="#2D3F6B" stroke="white" stroke-width="1" opacity="0.9"/>
-        <text x="224" y="45" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Lo</text>
-        <text x="214" y="49" text-anchor="end" font-size="4" fill="#1B2A4A">Loire</text>
-      </g>
-
-      <!-- SPAIN -->
-      <g id="mr-rioja" onclick="mapRegion('rioja')" style="cursor:pointer">
-        <circle cx="222" cy="60" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="222" y="56.5" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Ri</text>
-        <text x="215" y="65" text-anchor="middle" font-size="4" fill="white">Rioja</text>
-      </g>
-
-      <g id="mr-priorat" onclick="mapRegion('priorat')" style="cursor:pointer">
-        <circle cx="232" cy="63" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="232" y="60" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Pr</text>
-        <text x="232" y="70" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Priorat</text>
-      </g>
-
-      <g id="mr-riasbaixas" onclick="mapRegion('riasbaixas')" style="cursor:pointer">
-        <circle cx="215" cy="60" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="215" y="57" text-anchor="middle" font-size="4" fill="white" font-weight="bold">RB</text>
-        <text x="208" y="64" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Rías</text>
-      </g>
-
-      <g id="mr-jerez" onclick="mapRegion('jerez')" style="cursor:pointer">
-        <circle cx="218" cy="70" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="218" y="67" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Je</text>
-        <text x="212" y="76" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Jerez</text>
-      </g>
-
-      <!-- ITALY -->
-      <g id="mr-barolo" onclick="mapRegion('barolo')" style="cursor:pointer">
-        <circle cx="245" cy="54" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="245" y="51" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Ba</text>
-        <text x="245" y="62" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Barolo</text>
-      </g>
-
-      <g id="mr-tuscany" onclick="mapRegion('tuscany')" style="cursor:pointer">
-        <circle cx="247" cy="63" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="247" y="60" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Tu</text>
-        <text x="247" y="71" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Tuscany</text>
-      </g>
-
-      <g id="mr-veneto" onclick="mapRegion('veneto')" style="cursor:pointer">
-        <circle cx="248" cy="50" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="248" y="47" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Ve</text>
-        <text x="255" y="51" text-anchor="start" font-size="3.5" fill="#1B2A4A">Veneto</text>
-      </g>
-
-      <!-- GERMANY -->
-      <g id="mr-mosel" onclick="mapRegion('mosel')" style="cursor:pointer">
-        <circle cx="238" cy="36" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="238" y="33" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Mo</text>
-        <text x="238" y="44" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Mosel</text>
-      </g>
-
-      <g id="mr-rheingau" onclick="mapRegion('rheingau')" style="cursor:pointer">
-        <circle cx="243" cy="38" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="243" y="35" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Rg</text>
-        <text x="249" y="39" text-anchor="start" font-size="3.5" fill="#1B2A4A">Rheingau</text>
-      </g>
-
-      <!-- PORTUGAL -->
-      <g id="mr-douro" onclick="mapRegion('douro')" style="cursor:pointer">
-        <circle cx="216" cy="65" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="216" y="62" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Do</text>
-        <text x="216" y="73" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Douro</text>
-      </g>
-
-      <!-- HUNGARY -->
-      <g id="mr-tokaj" onclick="mapRegion('tokaj')" style="cursor:pointer">
-        <circle cx="256" cy="42" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="256" y="39" text-anchor="middle" font-size="5" fill="white" font-weight="bold">To</text>
-        <text x="256" y="50" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Tokaj</text>
-      </g>
-
-      <!-- USA - Napa / Sonoma / Oregon -->
-      <g id="mr-napa" onclick="mapRegion('napa')" style="cursor:pointer">
-        <circle cx="52" cy="68" r="6" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="52" y="65" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Na</text>
-        <text x="52" y="77" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Napa</text>
-      </g>
-
-      <g id="mr-willamette" onclick="mapRegion('willamette')" style="cursor:pointer">
-        <circle cx="46" cy="58" r="5" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="46" y="55" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Or</text>
-        <text x="46" y="66" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Oregon</text>
-      </g>
-
-      <!-- ARGENTINA -->
-      <g id="mr-mendoza" onclick="mapRegion('mendoza')" style="cursor:pointer">
-        <circle cx="116" cy="195" r="6" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="116" y="192" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Me</text>
-        <text x="116" y="204" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Mendoza</text>
-      </g>
-
-      <g id="mr-salta" onclick="mapRegion('salta')" style="cursor:pointer">
-        <circle cx="120" cy="175" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="120" y="172" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Sa</text>
-        <text x="126" y="176" text-anchor="start" font-size="3.5" fill="#1B2A4A">Salta</text>
-      </g>
-
-      <!-- CHILE -->
-      <g id="mr-maipo" onclick="mapRegion('maipo')" style="cursor:pointer">
-        <circle cx="104" cy="195" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="104" y="192" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Ch</text>
-        <text x="104" y="203" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Chile</text>
-      </g>
-
-      <!-- SOUTH AFRICA -->
-      <g id="mr-stellenbosch" onclick="mapRegion('stellenbosch')" style="cursor:pointer">
-        <circle cx="232" cy="200" r="6" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="232" y="197" text-anchor="middle" font-size="5" fill="white" font-weight="bold">SA</text>
-        <text x="232" y="209" text-anchor="middle" font-size="3.5" fill="#1B2A4A">S.Africa</text>
-      </g>
-
-      <!-- AUSTRALIA -->
-      <g id="mr-barossa" onclick="mapRegion('barossa')" style="cursor:pointer">
-        <circle cx="420" cy="195" r="6" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="420" y="192" text-anchor="middle" font-size="5" fill="white" font-weight="bold">Ba</text>
-        <text x="420" y="204" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Barossa</text>
-      </g>
-
-      <g id="mr-margaret" onclick="mapRegion('margaret')" style="cursor:pointer">
-        <circle cx="400" cy="202" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="400" y="199" text-anchor="middle" font-size="4" fill="white" font-weight="bold">MR</text>
-        <text x="394" y="209" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Margaret R.</text>
-      </g>
-
-      <g id="mr-coonawarra" onclick="mapRegion('coonawarra')" style="cursor:pointer">
-        <circle cx="430" cy="205" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="430" y="202" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Co</text>
-        <text x="436" y="207" text-anchor="start" font-size="3.5" fill="#1B2A4A">Coonawarra</text>
-      </g>
-
-      <g id="mr-yarra" onclick="mapRegion('yarra')" style="cursor:pointer">
-        <circle cx="438" cy="197" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="438" y="194" text-anchor="middle" font-size="4" fill="white" font-weight="bold">Ya</text>
-        <text x="444" y="198" text-anchor="start" font-size="3.5" fill="#1B2A4A">Yarra V.</text>
-      </g>
-
-      <!-- NEW ZEALAND -->
-      <g id="mr-marlborough" onclick="mapRegion('marlborough')" style="cursor:pointer">
-        <circle cx="466" cy="215" r="5" fill="#1B2A4A" stroke="white" stroke-width="1.5" opacity="0.9"/>
-        <text x="466" y="212" text-anchor="middle" font-size="5" fill="white" font-weight="bold">NZ</text>
-        <text x="466" y="224" text-anchor="middle" font-size="3.5" fill="#1B2A4A">Marlborough</text>
-      </g>
-
-      <g id="mr-centralotago" onclick="mapRegion('centralotago')" style="cursor:pointer">
-        <circle cx="464" cy="225" r="4" fill="#1B2A4A" stroke="white" stroke-width="1" opacity="0.85"/>
-        <text x="464" y="222" text-anchor="middle" font-size="4" fill="white" font-weight="bold">CO</text>
-        <text x="470" y="226" text-anchor="start" font-size="3.5" fill="#1B2A4A">C. Otago</text>
-      </g>
-
-      <!-- Compass rose -->
-      <g transform="translate(476,22)">
-        <circle r="9" fill="rgba(255,255,255,0.6)" stroke="rgba(27,42,74,0.2)" stroke-width="0.5"/>
-        <text text-anchor="middle" y="-4" font-size="5" fill="#1B2A4A" font-weight="bold">N</text>
-        <text text-anchor="middle" y="8" font-size="5" fill="#475569">S</text>
-        <text x="-6" y="2.5" text-anchor="middle" font-size="5" fill="#475569">W</text>
-        <text x="6" y="2.5" text-anchor="middle" font-size="5" fill="#475569">E</text>
-      </g>
-
-      <!-- Equator line -->
-      <line x1="0" y1="148" x2="500" y2="148" stroke="rgba(27,42,74,0.12)" stroke-width="0.5" stroke-dasharray="4,3"/>
-      <text x="8" y="146" font-size="4" fill="rgba(27,42,74,0.4)">Equator</text>
-
-    </svg>
+  <!-- Map container -->
+  <div id="map-container" style="position:relative;overflow:hidden;height:280px;background:#B8D4E8;cursor:grab;touch-action:none">
+    <canvas id="map-canvas" style="position:absolute;top:0;left:0"></canvas>
+    <div id="map-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none"></div>
   </div>
 
   <!-- Region detail panel -->
   <div id="map-region-detail" style="display:none;padding:12px 14px;border-top:1px solid var(--border)">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-      <div id="mrd-title" style="font-size:14px;font-weight:700;color:var(--navy)">Region</div>
-      <button onclick="mapClose()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:0;line-height:1">×</button>
+      <div id="mrd-title" style="font-size:14px;font-weight:700;color:var(--navy)"></div>
+      <button onclick="mapCloseDetail()" style="background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1">×</button>
     </div>
     <div id="mrd-grapes" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:4px"></div>
     <div id="mrd-wines" style="font-size:11px;color:var(--navy);font-weight:600;margin-bottom:3px"></div>
@@ -763,85 +525,6 @@ nav::-webkit-scrollbar{display:none}
 </div>
 </div>
 
-
-<div class="rs2">
-<div class="rst">🍇 LO1 — Vineyard & Environment</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Grape Anatomy</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Skin:</strong> Colour pigment, tannins, aromatic compounds<br><strong style="color:var(--gold)">Pulp:</strong> Sugar, acidity, water — colourless<br><strong style="color:var(--gold)">Seeds:</strong> Harsh bitter tannins — avoid crushing<br><br><strong style="color:var(--gold)">Skin thickness → tannins:</strong><br>Thick skin = more tannins + deeper colour. Cabernet Sauvignon, Syrah, Malbec.<br>Thin skin = fewer tannins + pale colour. Pinot Noir, Grenache, Nebbiolo.<br><br><strong style="color:var(--gold)">Berry size → concentration:</strong><br>Small berries = high skin-to-juice ratio = more tannin + flavour per litre.<br>Large berries = more dilute, lower tannins.<br>Cabernet Sauvignon: small berry + thick skin = very high tannins.<br>Merlot: larger berry + thinner skin = softer, rounder tannins.<br><br>💡 Pulp is colourless → Blanc de Noirs Champagne (white wine from red grapes)<br>💡 Tannins come from skin, seeds and stems — NOT from pulp</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Climate Effects</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Climate</th><th>Acidity</th><th>Alcohol</th><th>Fruit</th></tr><tr><td>Cool</td><td>High</td><td>Low</td><td>Citrus, green</td></tr><tr><td>Moderate</td><td>Balanced</td><td>Medium</td><td>Stone, berry</td></tr><tr><td>Warm</td><td>Low</td><td>High</td><td>Jam, tropical</td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Environmental Factors</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Altitude:</strong> +100m = -0.6°C → preserves acidity (Mendoza)<br><strong style="color:var(--gold)">Rivers:</strong> Reflect light, moderate temp, create mist<br><strong style="color:var(--gold)">Slate (Schiefer):</strong> Absorbs + releases heat — Mosel<br><strong style="color:var(--gold)">Limestone:</strong> Drainage + mineral character</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Concentration Methods — Sweet Wines</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Noble Rot:</strong> <span class="tag tsweet">Sweet</span> Cool humid mornings + warm dry afternoons. Sauternes, Tokaji, BA/TBA.<br><br><strong style="color:var(--gold)">Raisining:</strong> <span class="tag tsweet">Sweet</span> Dried after harvest. Amarone.<br><br><strong style="color:var(--gold)">Icewine/Eiswein:</strong> <span class="tag tsweet">Very Sweet</span> Frozen grapes pressed. Canada, Germany.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">European Labelling</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">France:</strong> AOC/AOP → IGP → Vin de France<br><strong style="color:var(--gold)">Italy:</strong> DOCG → DOC → IGT<br><strong style="color:var(--gold)">Spain:</strong> DOCa (Rioja+Priorat only) → DO → VdlT<br><strong style="color:var(--gold)">Germany:</strong> Prädikatswein → Qualitätswein → Landwein</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Spanish Ageing — Rioja</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Level</th><th>Total</th><th>Min Oak</th></tr><tr><td>Joven</td><td>None</td><td>None</td></tr><tr><td>Crianza</td><td>2 years</td><td>6 months</td></tr><tr><td>Reserva</td><td>3 years</td><td>1 year</td></tr><tr><td>Gran Reserva</td><td>5 years</td><td>2 years</td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">German Prädikat Ladder</span><span class="ra">›</span></div><div class="rcb">Dry → Sweet:<br><span class="tag tdry">Kabinett</span><span class="tag toff">Spätlese</span><span class="tag toff">Auslese</span><span class="tag tsweet">BA</span><span class="tag tsweet">TBA</span><span class="tag tsweet">Eiswein</span><br><br><strong style="color:var(--gold)">Trocken</strong> = dry style (any level)</div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍶 LO2 — Winemaking & Ageing</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Production by Style</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Red:</strong> <span class="tag tdry">Dry</span> Crush → macerate skins → ferment → press → age<br><strong style="color:var(--gold)">White:</strong> <span class="tag tdry">Usually Dry</span> Crush → press immediately → ferment cool<br><strong style="color:var(--gold)">Rosé:</strong> <span class="tag tdry">Usually Dry</span> Short skin maceration (hours)<br><strong style="color:var(--gold)">Sweet (quality):</strong> <span class="tag tsweet">Sweet</span> Stop fermentation early = residual sugar</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Vessel Types</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Stainless Steel:</strong> Neutral, fresh, fruity<br><strong style="color:var(--gold)">Concrete:</strong> Neutral, adds texture<br><strong style="color:var(--gold)">New French Oak:</strong> Vanilla, spice, cedar — subtle<br><strong style="color:var(--gold)">New American Oak:</strong> Vanilla, coconut, dill — bold<br><strong style="color:var(--gold)">Old Oak:</strong> Oxygen only, no flavour</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">MLF & Lees Ageing</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">MLF:</strong> Malic acid → Lactic acid. Softer, creamier, buttery.<br>Encourage: reds, oaked whites. Prevent: Riesling, Sauv Blanc.<br><br><strong style="color:var(--gold)">Lees:</strong> Dead yeast → brioche, biscuit, creamy (autolytic).<br>Sur Lie = on the lees label term.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Bottle Ageing Changes</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Red:</strong> Purple → ruby → garnet → brick. Tannins soften. Leather, tobacco, earth (tertiary).<br><br><strong style="color:var(--gold)">White:</strong> Pale → gold → amber. Honey, nuts, PETROL (Riesling).<br><br><strong style="color:var(--gold)">Primary</strong>=grape. <strong style="color:var(--gold)">Secondary</strong>=winemaking. <strong style="color:var(--gold)">Tertiary</strong>=bottle age.</div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍷 LO3 — Principal White Grapes</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Chardonnay</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> Neutral — reflects climate and winemaking.<br><br><strong style="color:var(--gold)">Chablis (cool):</strong> Green apple, chalk, mineral. Unoaked. High acidity.<br><strong style="color:var(--gold)">Meursault/Burgundy (moderate):</strong> Peach, butter (MLF), vanilla (oak). Full body.<br><strong style="color:var(--gold)">Napa/AUS (warm):</strong> Mango, pineapple, heavy oak. Full body, low acidity.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Pinot Grigio / Pinot Gris</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Italian Pinot Grigio:</strong> <span class="tag tdry">Dry</span> Light, high acidity, lemon, apple. Unoaked. Simple.<br><br><strong style="color:var(--gold)">Alsace Pinot Gris:</strong> <span class="tag toff">Off-dry to Sweet</span> Full body, honey, ginger, spice, complex.<br><br>💡 Same grape — completely opposite styles.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Sauvignon Blanc</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> High acidity, aromatic, almost never oaked.<br><br><strong style="color:var(--gold)">Loire (Sancerre):</strong> Grapefruit, flint, mineral. Limestone. Elegant.<br><strong style="color:var(--gold)">Marlborough NZ:</strong> Passion fruit, guava, tomato leaf. Explosive.<br><strong style="color:var(--gold)">Bordeaux:</strong> Blended with Sémillon.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Riesling</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> to <span class="tag tsweet">Very Sweet</span> — full spectrum. Very high acidity. Never oaked.<br><br><strong style="color:var(--gold)">Aged aroma: PETROL (TDN)</strong> ← KEY EXAM FACT<br><strong style="color:var(--gold)">Mosel:</strong> Off-dry, delicate, slate. <strong style="color:var(--gold)">Alsace:</strong> Dry, full, powerful. <strong style="color:var(--gold)">Clare/Eden AUS:</strong> Bone dry, lime.</div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍷 LO3 — Principal Red Grapes</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Cabernet Sauvignon</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> Very high tannins. High acidity. Full body. Ages brilliantly.<br><br><strong style="color:var(--gold)">Left Bank Bordeaux:</strong> Cassis, cedar, graphite. Pauillac. 10-20yr+<br><strong style="color:var(--gold)">Napa Valley:</strong> Blackberry, chocolate, eucalyptus.<br><strong style="color:var(--gold)">Chile/Coonawarra:</strong> Cassis, mint. Great value.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Merlot</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> Medium tannins. Medium acidity. More approachable young.<br><br><strong style="color:var(--gold)">Right Bank Bordeaux:</strong> Plum, violet, velvety. Pomerol, Saint-Émilion.<br><strong style="color:var(--gold)">Chile:</strong> Soft, plummy, great value.<br>Thinner skin than Cab Sauv → softer tannins.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Syrah / Shiraz</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> Same grape, different names and styles.<br><br><strong style="color:var(--gold)">N.Rhône Syrah (cool):</strong> Pepper, violet, smoke. Elegant, structured. Hermitage.<br><strong style="color:var(--gold)">Barossa Shiraz (warm):</strong> Blackberry jam, chocolate, licorice. Generous.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Pinot Noir</span><span class="ra">›</span></div><div class="rcb"><span class="tag tdry">Dry</span> Low tannins. High acidity. Pale ruby. Climate sensitive.<br><br><strong style="color:var(--gold)">Burgundy:</strong> Red cherry, earthy, elegant. Gevrey-Chambertin.<br><strong style="color:var(--gold)">Oregon/Central Otago:</strong> Cherry, mineral, spice.<br>💡 Most versatile red — salmon, duck, mushrooms.</div></div>
-
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">🍇 Grape Skin Thickness &amp; Berry Size — All 8 Varieties</span><span class="ra">›</span></div><div class="rcb">
-<table class="rtb"><tr><th>Grape</th><th>Skin</th><th>Berry</th><th>Tannin Result</th></tr>
-<tr><td>Cabernet Sauvignon</td><td>Very thick</td><td>Small</td><td>Very high tannins, deep colour</td></tr>
-<tr><td>Syrah/Shiraz</td><td>Thick</td><td>Small-med</td><td>High tannins, inky colour</td></tr>
-<tr><td>Merlot</td><td>Medium-thin</td><td>Larger</td><td>Soft tannins, velvety texture</td></tr>
-<tr><td>Pinot Noir</td><td>Thin</td><td>Small</td><td>Low tannins, pale ruby</td></tr>
-<tr><td>Chardonnay</td><td>Thin-med</td><td>Medium</td><td>Neutral — reflects climate</td></tr>
-<tr><td>Sauvignon Blanc</td><td>Thin</td><td>Small-med</td><td>Aromatic compounds in skin</td></tr>
-<tr><td>Riesling</td><td>Thin</td><td>Small</td><td>Very high acidity in pulp</td></tr>
-<tr><td>Pinot Grigio/Gris</td><td>Pinkish-grey</td><td>Medium</td><td>Style depends on skin contact</td></tr>
-</table><br>
-💡 Thick skin + small berry = high tannins (Cabernet). Thin skin = low tannins (Pinot Noir).<br>
-💡 White grapes: skins always removed before fermentation = zero tannins in wine.
-</div></div>
-
-</div>
-<div class="rs2">
-<div class="rst">🌍 LO4 — Regional Varieties</div>
-<div class="rsub">🇫🇷 France</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Grenache, Gamay, Viognier</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Grenache:</strong> <span class="tag tdry">Dry</span> S.Rhône, Châteauneuf-du-Pape. Red fruit, high alcohol. GSM blend: +Syrah +Mourvèdre.<br><br><strong style="color:var(--gold)">Gamay:</strong> <span class="tag tdry">Dry</span> Beaujolais. Carbonic maceration. Strawberry, low tannin. Drink young.<br><br><strong style="color:var(--gold)">Viognier:</strong> <span class="tag tdry">Always Dry</span> Condrieu. Full body, LOW acidity. Apricot, peach, white flowers.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Chenin Blanc, Sémillon, Gewurztraminer, Furmint</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Chenin Blanc:</strong> <span class="tag tdry">Dry</span>/<span class="tag tsweet">Sweet</span>/<span class="tag tdry">Sparkling</span> Loire. Very high acidity = versatile. Savennières (dry), Vouvray (sweet), Crémant (sparkling).<br><br><strong style="color:var(--gold)">Sémillon:</strong> <span class="tag tdry">Dry</span>/<span class="tag tsweet">Sweet</span> Bordeaux blends + Sauternes (noble rot). Thin skin → Botrytis.<br><br><strong style="color:var(--gold)">Gewurztraminer:</strong> <span class="tag toff">Off-dry to Sweet</span> Alsace. Lychee, rose, ginger, spice.<br><br><strong style="color:var(--gold)">Furmint:</strong> <span class="tag tsweet">Very Sweet</span> Tokaj, Hungary. Tokaji Aszú. 3-6 puttonyos.</div></div>
-<div class="rsub">🇮🇹 Italy</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Sangiovese & Nebbiolo</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Sangiovese:</strong> <span class="tag tdry">Dry</span> Tuscany. High tannin + very high acidity. Sour cherry, leather.<br>Chianti Classico. Brunello DOCG (5yr). Rosso DOC (1yr) = Baby Brunello.<br><br><strong style="color:var(--gold)">Nebbiolo:</strong> <span class="tag tdry">Dry</span> Piedmont. VERY high tannin+acidity. PALE ruby. ROSES + TAR.<br>Barolo DOCG (3yr) = King. Barbaresco DOCG (2yr) = more elegant.</div></div>
-<div class="rsub">🇪🇸 Spain & 🌍 New World</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Tempranillo, Albariño, Malbec, Pinotage</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Tempranillo:</strong> <span class="tag tdry">Dry</span> Rioja DOCa, Ribera del Duero. Strawberry, leather. American oak = vanilla, coconut, dill.<br><br><strong style="color:var(--gold)">Albariño:</strong> <span class="tag tdry">Dry</span> Rías Baixas. Very high acidity. Citrus, peach, SALINE. Always unoaked.<br><br><strong style="color:var(--gold)">Malbec:</strong> <span class="tag tdry">Dry</span> Mendoza, Argentina. Dark fruit, chocolate, velvety. High altitude = good acidity.<br><br><strong style="color:var(--gold)">Pinotage:</strong> <span class="tag tdry">Dry</span> South Africa. Pinot Noir × Cinsault (1925). Smoky, earthy, dark fruit.</div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍾 LO5 — Sparkling Wines</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Sparkling Methods</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Traditional Method:</strong> 2nd fermentation IN BOTTLE → lees ageing → riddling → disgorgement → dosage. Complex, autolytic. Fine bubbles. Champagne, Cava, Crémant, Cap Classique.<br><br><strong style="color:var(--gold)">Tank/Charmat:</strong> 2nd fermentation in TANK. Fresh, fruity, no autolytic. Prosecco (Glera grape).<br><br><strong style="color:var(--gold)">Carbonation:</strong> CO2 injected. Cheap, coarse bubbles.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Champagne Key Facts</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Grapes:</strong> Chardonnay, Pinot Noir, Pinot Meunier (+ Arbane, Petit Meslier, Pinot Blanc, Gris)<br><strong style="color:var(--gold)">NV:</strong> Min 15mo (12 on lees). <strong style="color:var(--gold)">Vintage:</strong> Min 36mo. Exceptional years only.<br><strong style="color:var(--gold)">Blanc de Blancs:</strong> 100% Chardonnay. <strong style="color:var(--gold)">Blanc de Noirs:</strong> 100% red grapes.<br><strong style="color:var(--gold)">NM</strong>=buys grapes. <strong style="color:var(--gold)">RM</strong>=grower Champagne.</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Champagne Sweetness Scale ⚠️</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Term</th><th>Sugar g/L</th><th>Style</th></tr><tr><td>Brut Nature</td><td>0-3</td><td><span class="tag tdry">Bone dry</span></td></tr><tr><td>Extra Brut</td><td>0-6</td><td><span class="tag tdry">Very dry</span></td></tr><tr><td>Brut</td><td>0-12</td><td><span class="tag tdry">Dry</span> Most popular</td></tr><tr><td>⚠️ Extra Dry</td><td>12-17</td><td><span class="tag toff">SWEETER than Brut!</span></td></tr><tr><td>Sec</td><td>17-32</td><td><span class="tag toff">Medium sweet</span></td></tr><tr><td>Demi-Sec</td><td>32-50</td><td><span class="tag tsweet">Sweet</span></td></tr><tr><td>Doux</td><td>50+</td><td><span class="tag tsweet">Very sweet</span></td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Sparkling Regions Summary</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Wine</th><th>Country</th><th>Method</th><th>Key Grape</th></tr><tr><td>Champagne</td><td>France</td><td>Traditional</td><td>Chardonnay+PN+PM</td></tr><tr><td>Cava</td><td>Spain</td><td>Traditional</td><td>Macabeo+Xarel-lo</td></tr><tr><td>Crémant</td><td>France</td><td>Traditional</td><td>Varies by region</td></tr><tr><td>Cap Classique</td><td>S.Africa</td><td>Traditional</td><td>Chardonnay+PN</td></tr><tr><td>Prosecco</td><td>Italy</td><td>Tank</td><td>Glera 85%+</td></tr></table></div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍶 LO5 — Fortified Wines</div>
-<div class="kf"><strong>KEY DISTINCTION:</strong> Port: spirit MID-fermentation → always sweet. Douro Valley, Portugal.<br>Sherry: spirit AFTER fermentation → dry base. Jerez, Spain.</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">PORT — Complete Guide</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Douro Valley, Portugal. Touriga Nacional (primary grape).</strong><br>Aguardente added mid-fermentation at 6-7% alcohol → 19-20% ABV.<br><table class="tb"><tr><th>Style</th><th>Ageing</th><th>Colour</th><th>Sweetness</th><th>Flavours</th></tr><tr><td>Ruby</td><td>Large vats 2-3yr</td><td>Deep ruby</td><td><span class="tag tsweet">Sweet</span></td><td>Dark fruit, chocolate</td></tr><tr><td>Tawny 10/20/30/40</td><td>Small oak, oxidative</td><td>Pale amber</td><td><span class="tag tsweet">Sweet</span></td><td>Nuts, caramel, honey</td></tr><tr><td>LBV</td><td>4-6yr single vintage</td><td>Deep ruby</td><td><span class="tag tsweet">Sweet</span></td><td>Dark fruit, complex</td></tr><tr><td>Vintage</td><td>2yr barrel + bottle</td><td>Deep ruby</td><td><span class="tag tsweet">Sweet</span></td><td>Leather, tobacco. DECANT!</td></tr><tr><td>White Port</td><td>Varies</td><td>Pale gold</td><td><span class="tag tdry">Dry</span>/<span class="tag tsweet">Sweet</span></td><td>Nutty, serve with tonic</td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">SHERRY — Complete Guide</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Jerez Triangle, Spain. Palomino (dry) / PX (sweet).</strong><br>Flor = yeast film. Solera system = fractional blending, no vintage.<br><table class="tb"><tr><th>Style</th><th>Flor?</th><th>Colour</th><th>Sweetness</th><th>Key Flavours</th></tr><tr><td>Fino</td><td>Yes, full</td><td>Pale</td><td><span class="tag tdry">Dry</span></td><td>Saline, almond</td></tr><tr><td>Manzanilla</td><td>Yes, thick</td><td>Very pale</td><td><span class="tag tdry">Dry</span></td><td>Saline. From Sanlúcar!</td></tr><tr><td>Amontillado</td><td>Starts, dies</td><td>Amber</td><td><span class="tag tdry">Dry</span></td><td>Hazelnut, tobacco</td></tr><tr><td>Oloroso</td><td>No flor</td><td>Dark amber</td><td><span class="tag tdry">Dry</span></td><td>Walnut, rich</td></tr><tr><td>Pedro Ximénez</td><td>No</td><td>Almost black</td><td><span class="tag tsweet">Very Sweet</span></td><td>Raisin, fig, molasses</td></tr><tr><td>Cream</td><td>No</td><td>Amber</td><td><span class="tag tsweet">Sweet</span></td><td>Oloroso + PX blend</td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">MADEIRA & Vin Doux Naturel</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Madeira:</strong> Madeira Island, Portugal. Heated (estufagem) → already oxidised → INDESTRUCTIBLE.<br><table class="tb"><tr><th>Style</th><th>Sweetness</th></tr><tr><td>Sercial</td><td><span class="tag tdry">Dry</span></td></tr><tr><td>Verdelho</td><td><span class="tag toff">Off-dry</span></td></tr><tr><td>Bual</td><td><span class="tag tsweet">Medium Sweet</span></td></tr><tr><td>Malmsey</td><td><span class="tag tsweet">Sweet</span></td></tr></table><br><strong style="color:var(--gold)">Vin Doux Naturel:</strong> Spirit added to partially fermented must. <span class="tag tsweet">Sweet</span><br>Muscat de Beaumes-de-Venise: white, floral. Banyuls: red Grenache, like Tawny Port.</div></div>
-</div>
-<div class="rs2">
-<div class="rst">🍽️ LO6 — Storage, Service & Pairing</div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Storage Conditions</span><span class="ra">›</span></div><div class="rcb"><strong style="color:var(--gold)">Temperature:</strong> 12-14°C (constant)<br><strong style="color:var(--gold)">Humidity:</strong> 70-80%<br><strong style="color:var(--gold)">Light:</strong> Dark (UV damages wine)<br><strong style="color:var(--gold)">Vibration:</strong> None<br><strong style="color:var(--gold)">Position:</strong> Horizontal</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Service Temperatures</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Wine</th><th>Temp</th></tr><tr><td>Sparkling & sweet whites</td><td>6-10°C</td></tr><tr><td>Light/aromatic whites & rosé</td><td>7-10°C</td></tr><tr><td>Full-bodied whites</td><td>10-13°C</td></tr><tr><td>Light reds (Beaujolais, Pinot)</td><td>13-16°C</td></tr><tr><td>Full-bodied reds</td><td>16-18°C</td></tr></table></div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Food Pairing Principles</span><span class="ra">›</span></div><div class="rcb">✓ Match weight with weight<br>✓ High acidity cuts fat and cream<br>✓ Tannin + red meat = perfect<br>✓ Tannin + fish = CLASH (metallic)<br>✓ Sweet wine balances spicy food<br>✓ Wine must be ≥ sweetness of dessert<br>✓ Salt softens tannin and acidity<br>✓ Local food + local wine often works</div></div>
-<div class="rc" onclick="tog(this)"><div class="rch"><span class="rct">Classic Food Pairings</span><span class="ra">›</span></div><div class="rcb"><table class="tb"><tr><th>Wine</th><th>Perfect Pairing</th></tr><tr><td>Champagne/Chablis</td><td>Oysters</td></tr><tr><td>Sancerre</td><td>Goat's cheese</td></tr><tr><td>Riesling Spätlese</td><td>Spicy Thai/Asian</td></tr><tr><td>Albariño</td><td>Seafood, prawns</td></tr><tr><td>Oaked Chardonnay</td><td>Lobster, rich fish</td></tr><tr><td>Cabernet Sauvignon</td><td>Ribeye steak</td></tr><tr><td>Pinot Noir</td><td>Salmon, duck, mushrooms</td></tr><tr><td>Barolo/Nebbiolo</td><td>Truffle pasta</td></tr><tr><td>Chianti Classico</td><td>Tomato pasta, bistecca</td></tr><tr><td>Malbec</td><td>Argentine asado (BBQ)</td></tr><tr><td>Gewurztraminer</td><td>Foie gras, Asian food</td></tr><tr><td>Vintage Port</td><td>Stilton cheese</td></tr><tr><td>PX Sherry</td><td>Vanilla ice cream</td></tr><tr><td>Fino/Manzanilla</td><td>Tapas, jamón, prawns</td></tr></table></div></div>
-</div>
 
 <!-- EXPANDED COUNTRY DETAILS -->
 <div class="rs2">
@@ -1785,6 +1468,7 @@ function show(id){
   if(id==='fc')initFC();
   if(id==='weak')renderWeak();
   if(id==='sat')satRenderList();
+  if(id==='ref'){setTimeout(initMap,50);}
   window.scrollTo(0,0);
 }
 
@@ -2343,68 +2027,280 @@ function mapSelect(region){
 
 // ===== WORLD MAP =====
 const MAP_REGIONS = {
-  france:{title:"🇫🇷 France — Overview",grapes:"Pinot Noir, Chardonnay, Cabernet Sauvignon, Merlot, Syrah, Sauvignon Blanc, Grenache, Gamay, Chenin Blanc, Viognier, Riesling, Gewurztraminer",wines:"Bordeaux, Burgundy, Champagne, Côtes du Rhône, Sancerre, Chablis",note:"Tap sub-regions: Champagne, Burgundy, Bordeaux, Rhône, Alsace, Loire"},
-  champagne:{title:"🥂 Champagne, France",grapes:"Chardonnay (Côte des Blancs), Pinot Noir (Montagne de Reims), Pinot Meunier (Vallée de la Marne)",wines:"NV Brut, Blanc de Blancs, Blanc de Noirs, Vintage, Rosé, Prestige Cuvée",note:"Traditional method. 15mo NV / 36mo Vintage min lees. Grand Cru villages (100%): Ay, Cramant, Avize, Le Mesnil-sur-Oger, Bouzy"},
-  burgundy:{title:"🍷 Burgundy, France",grapes:"Pinot Noir (red), Chardonnay (white), Gamay (Beaujolais), Aligoté",wines:"Chablis, Côte d'Or (Meursault, Gevrey-Chambertin, Vosne-Romanée), Beaujolais",note:"Côte de Nuits: Gevrey-Chambertin, Morey-St-Denis, Chambolle-Musigny, Vosne-Romanée, Nuits-St-Georges. Côte de Beaune: Meursault, Puligny-Montrachet, Chassagne-Montrachet"},
-  bordeaux:{title:"🍷 Bordeaux, France",grapes:"Left Bank: Cabernet Sauvignon dominant (Médoc, Pauillac, Margaux). Right Bank: Merlot dominant (Pomerol, St-Émilion). Sémillon for Sauternes.",wines:"Médoc reds, Saint-Émilion, Pomerol, Sauternes (noble rot sweet)",note:"5 First Growths: Latour, Lafite, Mouton (Pauillac), Margaux, Haut-Brion. Pétrus = most expensive (Pomerol, 100% Merlot). D'Yquem = greatest Sauternes"},
-  rhone:{title:"🍇 Rhône Valley, France",grapes:"N.Rhône: Syrah, Viognier, Marsanne, Roussanne. S.Rhône: Grenache, Syrah, Mourvèdre (GSM)",wines:"Hermitage, Côte-Rôtie, Condrieu, Crozes-Hermitage, Châteauneuf-du-Pape, Gigondas",note:"N.Rhône: Syrah only for reds. S.Rhône: up to 18 varieties permitted in CdP. Galets (large stones) store heat"},
-  alsace:{title:"🍇 Alsace, France",grapes:"Riesling, Gewurztraminer, Pinot Gris, Pinot Blanc, Muscat, Pinot Noir (red)",wines:"Alsace Riesling, Gewurztraminer, Pinot Gris, Cremant d'Alsace (sparkling), Vendange Tardive (late harvest)",note:"Protected by Vosges mountains = France's driest wine region. Fuller, drier aromatic whites than elsewhere. 51 Grands Crus"},
-  loire:{title:"🌿 Loire Valley, France",grapes:"Sauvignon Blanc (Sancerre/Pouilly-Fumé), Chenin Blanc (Vouvray/Savennières), Cabernet Franc (Chinon), Melon de Bourgogne (Muscadet)",wines:"Sancerre, Pouilly-Fumé, Vouvray, Savennières, Chinon, Muscadet, Quarts de Chaume",note:"Loire stretches 1000km. Western Loire = Muscadet (seafood). Central = Sauvignon Blanc. Anjou = Chenin Blanc. Touraine = Cabernet Franc"},
-  rioja:{title:"🍷 Rioja + Ribera del Duero, Spain",grapes:"Tempranillo (dominant), Garnacha, Graciano, Mazuelo",wines:"Joven, Crianza, Reserva, Gran Reserva",note:"Rioja DOCa: 3 sub-zones (Alta, Alavesa, Oriental). Ribera del Duero DO: higher altitude 800-900m, more powerful Tempranillo. Vega Sicilia = Spain's most prestigious estate"},
-  priorat:{title:"⛰ Priorat DOCa, Spain",grapes:"Grenache (Garnacha), Carignan (Cariñena), Cabernet Sauvignon",wines:"Powerful concentrated reds (L'Ermita, Clos Erasmus, Finca Dofí)",note:"Only 2 Spanish DOCa (alongside Rioja). Llicorella = black slate + quartz soils. Very low yields. Very expensive. Álvaro Palacios put it on the map"},
-  riasbaixas:{title:"🌊 Rías Baixas, Spain",grapes:"Albariño (dominant)",wines:"Dry, aromatic, saline Albariño white wine",note:"Galicia, northwest Spain. Atlantic ocean + granite soils = distinctive saline/mineral character. Val do Salnés largest sub-zone. Monção e Melgaço (Portuguese side) = Alvarinho"},
-  jerez:{title:"🍶 Jerez (Sherry), Spain",grapes:"Palomino (all dry styles), Pedro Ximénez (sweet), Moscatel",wines:"Fino, Manzanilla (Sanlúcar), Amontillado, Oloroso, PX, Cream",note:"Jerez Triangle: Jerez de la Frontera, Sanlúcar de Barrameda (Manzanilla), El Puerto de Santa María. Solera system = no vintage. Albariza chalk soils"},
-  barolo:{title:"👑 Barolo + Barbaresco, Piedmont Italy",grapes:"Nebbiolo (100% for both)",wines:"Barolo DOCG (3yr min, 5yr Riserva), Barbaresco DOCG (2yr min), Barbera d'Asti, Moscato d'Asti",note:"Barolo communes: La Morra (elegant), Serralunga d'Alba (powerful), Castiglione Falletto, Barolo village. Barbaresco villages: Neive, Treiso. Roses + tar aroma signature"},
-  tuscany:{title:"🌿 Tuscany, Italy",grapes:"Sangiovese (Chianti, Brunello), Cabernet Sauvignon (Super Tuscans), Vernaccia",wines:"Chianti Classico DOCG, Brunello di Montalcino DOCG, Super Tuscans (Sassicaia, Tignanello), Vino Nobile",note:"Chianti Classico: 80%+ Sangiovese, black cockerel (Gallo Nero). Brunello = 5yr min. Super Tuscans = IGT rebels using Cabernet/Merlot. Bolgheri (Sassicaia) near coast"},
-  veneto:{title:"🍾 Veneto, Italy",grapes:"Glera (Prosecco), Corvina (Amarone/Valpolicella), Garganega (Soave), Pinot Grigio",wines:"Prosecco DOCG (Conegliano Valdobbiadene), Amarone della Valpolicella DOCG, Soave, Bardolino",note:"Amarone = dried grapes (appassimento 90-120 days). Prosecco = tank method, Glera grape. Cartizze = most prestigious Prosecco hill"},
-  mosel:{title:"🍇 Mosel, Germany",grapes:"Riesling (dominant), Pinot Blanc, Pinot Gris",wines:"Riesling Kabinett to TBA. Bernkasteler Doctor, Wehlener Sonnenuhr, Ürziger Würzgarten",note:"Steep south-facing slate (Schiefer) slopes. Cool climate. Lightest, most delicate German Rieslings. 7-10% ABV typical. Key villages: Bernkastel, Wehlen, Graach, Piesport, Urzig"},
-  rheingau:{title:"🍇 Rheingau + Pfalz, Germany",grapes:"Riesling (Rheingau/Pfalz), Pinot Noir (Spätburgunder, Baden)",wines:"Rheingau Riesling (drier, fuller), Pfalz Riesling, Baden Pinot Noir",note:"Rheingau: south-facing Rhine slopes, fuller-bodied drier Rieslings. Schloss Johannisberg famous estate. Pfalz: warmer, diverse varieties. Baden: Germany's warmest region, Pinot Noir"},
-  douro:{title:"🍷 Douro + Port, Portugal",grapes:"Touriga Nacional, Touriga Franca, Tinta Roriz (Tempranillo), Tinta Barroca",wines:"Port (Ruby, Tawny, LBV, Vintage, White), Douro DOC dry reds",note:"World's oldest demarcated wine region (1756). Steep schist terraces. 3 sub-regions: Baixo Corgo, Cima Corgo (best Port), Douro Superior. Grape spirit (aguardente) fortifies Port mid-fermentation"},
-  tokaj:{title:"🍯 Tokaj, Hungary",grapes:"Furmint (dominant), Hárslevelű, Zéta",wines:"Tokaji Aszú (3-6 puttonyos), Tokaji Eszencia, Dry Furmint",note:"UNESCO World Heritage. Noble rot (Botrytis) on Furmint. Aszú berries added to base wine. One of Europe's oldest great sweet wines. Eszencia = almost syrup, barely fermentable. Dry Furmint increasingly important"},
-  napa:{title:"🍷 Napa Valley, California USA",grapes:"Cabernet Sauvignon, Chardonnay, Merlot, Cabernet Franc, Zinfandel",wines:"World-class Cabernet Sauvignon, Chardonnay (Carneros), Meritage blends",note:"Sub-AVAs: Rutherford (dusty tannins), Oakville (power + To Kalon vineyard), Stags Leap (elegance — 1976 Paris winner), Howell Mountain (mountain vigour), Calistoga (warmest). Robert Mondavi pioneered modern Napa"},
-  willamette:{title:"🌲 Willamette Valley, Oregon USA",grapes:"Pinot Noir (dominant), Chardonnay, Pinot Gris, Riesling",wines:"Elegant, high-acid Pinot Noir",note:"Cool Pacific Northwest. Similar to Burgundy. Sub-AVAs: Dundee Hills (red Jory volcanic soil), Chehalem Mountains, Eola-Amity Hills. Key producers: Eyrie Vineyards (pioneered in 1966), Domaine Drouhin, Adelsheim"},
-  mendoza:{title:"🏔 Mendoza, Argentina",grapes:"Malbec (flagship), Cabernet Sauvignon, Torrontés (Salta), Bonarda, Cabernet Franc",wines:"Mendoza Malbec, Valle de Uco elegant Malbec, Salta Torrontés",note:"Andes foothills 800-1500m. 3 sub-regions: Luján de Cuyo (historic Malbec), Maipú, Valle de Uco (most elegant, highest altitude). Huarpe people irrigated these valleys for centuries"},
-  salta:{title:"⛰ Salta / Cafayate, Argentina",grapes:"Torrontés (signature white), Malbec, Cabernet Sauvignon, Tannat",wines:"Torrontés (aromatic, floral dry white), high-altitude Malbec",note:"Cafayate Valley at 1700m+. Some vineyards at 3000m = world's highest. Intense UV, very large diurnal range. Torrontés: Argentina's signature white grape — grapey, rose, spice. Dry despite aromatic profile"},
-  maipo:{title:"🍷 Chile — Key Regions",grapes:"Cabernet Sauvignon (Maipo), Carmenère (Colchagua), Sauvignon Blanc (Casablanca), Pinot Noir (Casablanca)",wines:"Maipo Cabernet, Colchagua Carmenère, Casablanca Sauvignon Blanc and Pinot Noir",note:"Maipo Valley: Cabernet capital, near Santiago. Colchagua: Carmenère (Chile's signature grape). Casablanca: cool Pacific, Sauvignon Blanc + Pinot Noir. Carmenère: Bordeaux origin, thought extinct until DNA test 1994"},
-  stellenbosch:{title:"🌿 South Africa — Key Regions",grapes:"Chenin Blanc (Steen), Cabernet Sauvignon, Syrah, Pinotage, Grenache (Swartland)",wines:"Stellenbosch Cabernet/Syrah/Pinotage, Swartland old vine Chenin, Constantia Sauvignon Blanc",note:"Stellenbosch: most prestigious. Swartland: artisanal old vines. Constantia: historic (Groot Constantia 1685). Walker Bay: cool maritime Pinot Noir. Pinotage = Pinot Noir × Cinsault, created 1925"},
-  barossa:{title:"🍷 Barossa Valley, Australia",grapes:"Shiraz (old vine, pre-phylloxera), Grenache, Mourvèdre, Riesling (Eden Valley)",wines:"Barossa Shiraz, GSM blends, Eden Valley Riesling",note:"Some vines 150+ years old (pre-phylloxera). Penfolds Grange (Shiraz, created 1951) = Australia's most iconic wine. Rich, powerful, jammy style. Opposite of Northern Rhône Syrah. Also: Henschke Hill of Grace (Eden Valley)"},
-  margaret:{title:"🌊 Margaret River, Australia",grapes:"Cabernet Sauvignon, Chardonnay, Sauvignon Blanc, Semillon",wines:"Cabernet Sauvignon (Bordeaux-like elegance), Chardonnay, Sauvignon Blanc/Semillon blends",note:"Southwest WA. Maritime Mediterranean climate. Considered Australia's most Bordeaux-like region for Cabernet. Cool ocean breezes. Key producers: Vasse Felix, Cullen, Leeuwin Estate"},
-  coonawarra:{title:"🔴 Coonawarra, Australia",grapes:"Cabernet Sauvignon (dominant), Shiraz",wines:"Australia's benchmark Cabernet Sauvignon",note:"Terra rossa: distinctive red clay over limestone. South Australia. Flat, small region but exceptional Cabernet quality. Cooler than Barossa. Structured, elegant Cabernet with cassis, mint, eucalyptus"},
-  yarra:{title:"🍃 Yarra Valley + Hunter Valley, Australia",grapes:"Pinot Noir, Chardonnay, Shiraz (Yarra), Semillon (Hunter)",wines:"Yarra: Pinot Noir, Chardonnay, sparkling. Hunter: Semillon (unique aged style)",note:"Yarra Valley (Victoria): cool, elegant Pinot Noir and Chardonnay. Hunter Valley (NSW): unique Semillon — very lean and mineral when young, ages into honeyed complexity over 10-20 years"},
-  marlborough:{title:"🥬 Marlborough, New Zealand",grapes:"Sauvignon Blanc (dominant), Pinot Noir, Pinot Gris, Riesling, Chardonnay",wines:"Marlborough Sauvignon Blanc (world benchmark), Pinot Noir",note:"South Island. Sub-regions: Wairau Valley (classic tropical style), Awatere Valley (more mineral/herbaceous). Cloudy Bay (1985) made Marlborough world-famous. Intense UV from thin ozone layer amplifies aromatics"},
-  centralotago:{title:"🏔 Central Otago, New Zealand",grapes:"Pinot Noir (dominant), Chardonnay, Pinot Gris, Riesling",wines:"World-class Pinot Noir — darker, fuller than Burgundy",note:"World's most southerly commercial wine region. Continental climate (unlike maritime NZ). Very high UV. Pinot Noir with darker fruit, more body and spice. Sub-regions: Cromwell Basin, Gibbston, Bannockburn, Wanaka"},
+  champagne:{title:"🥂 Champagne, France",lat:49.0,lng:4.0,group:'europe',grapes:"Chardonnay, Pinot Noir, Pinot Meunier",wines:"NV Brut, Blanc de Blancs, Vintage, Prestige Cuvée (Dom Pérignon, Cristal)",note:"Traditional method. 15mo NV / 36mo Vintage. Zones: Montagne de Reims (Pinot Noir), Côte des Blancs (Chardonnay), Vallée de la Marne (Pinot Meunier)"},
+  burgundy:{title:"🍷 Burgundy, France",lat:47.0,lng:4.85,group:'europe',grapes:"Pinot Noir, Chardonnay",wines:"Chablis, Meursault, Gevrey-Chambertin, Vosne-Romanée, Puligny-Montrachet",note:"Côte de Nuits: Gevrey-Chambertin, Chambolle-Musigny, Vosne-Romanée (Romanée-Conti). Côte de Beaune: Meursault, Puligny-Montrachet, Chassagne-Montrachet"},
+  bordeaux:{title:"🍷 Bordeaux, France",lat:44.8,lng:-0.6,group:'europe',grapes:"Cabernet Sauvignon (Left Bank), Merlot (Right Bank), Sémillon",wines:"Pauillac, Margaux, Pomerol, Saint-Émilion, Sauternes",note:"Left Bank: Pauillac (Latour, Lafite, Mouton), Margaux. Right Bank: Pomerol (Pétrus), Saint-Émilion. Sauternes: Château d'Yquem (noble rot)"},
+  rhone:{title:"🍇 Rhône Valley, France",lat:45.0,lng:4.8,group:'europe',grapes:"Syrah (N.Rhône), Grenache/Syrah/Mourvèdre (S.Rhône), Viognier",wines:"Hermitage, Côte-Rôtie, Condrieu, Châteauneuf-du-Pape, Gigondas",note:"N.Rhône: 100% Syrah reds. Côte-Rôtie unique: Viognier co-fermented with Syrah. S.Rhône: up to 18 varieties in CdP. Galets stones store heat"},
+  alsace:{title:"🍇 Alsace, France",lat:48.2,lng:7.4,group:'europe',grapes:"Riesling, Gewurztraminer, Pinot Gris, Pinot Blanc, Muscat",wines:"Alsace Riesling, Gewurztraminer, Crémant d'Alsace, Vendange Tardive",note:"Protected by Vosges mountains = France's driest region. Fuller, drier aromatic whites. 51 Grands Crus. Colmar is the wine capital"},
+  loire:{title:"🌿 Loire Valley, France",lat:47.4,lng:0.7,group:'europe',grapes:"Sauvignon Blanc, Chenin Blanc, Cabernet Franc, Melon de Bourgogne",wines:"Sancerre, Pouilly-Fumé, Vouvray, Chinon, Muscadet, Quarts de Chaume",note:"Sancerre/Pouilly-Fumé: Sauvignon Blanc mineral. Vouvray/Savennières: Chenin Blanc dry-sweet. Chinon: Cabernet Franc red. Muscadet: Melon de Bourgogne, sur lie"},
+  rioja:{title:"🍷 Rioja, Spain",lat:42.4,lng:-2.5,group:'europe',grapes:"Tempranillo, Garnacha, Graciano, Mazuelo",wines:"Crianza, Reserva, Gran Reserva",note:"DOCa. 3 sub-zones: Alta (most elegant, Atlantic), Alavesa (fresh, Basque), Oriental (warm, Mediterranean). Ageing: Joven/Crianza(2yr/6mo)/Reserva(3yr/1yr)/Gran Reserva(5yr/2yr)"},
+  ribera:{title:"🍷 Ribera del Duero, Spain",lat:41.6,lng:-3.7,group:'europe',grapes:"Tempranillo (Tinto Fino)",wines:"Powerful structured reds — Vega Sicilia (Único), Pingus",note:"DO. Altitude 800-900m. More powerful and concentrated than Rioja. Continental climate. Vega Sicilia = Spain's most prestigious estate"},
+  priorat:{title:"⛰ Priorat, Spain",lat:41.2,lng:0.75,group:'europe',grapes:"Grenache (Garnacha), Carignan, Cabernet Sauvignon",wines:"L'Ermita, Clos Erasmus, Finca Dofí — very powerful, expensive",note:"DOCa (only 2 in Spain). Llicorella black slate soils. Very low yields. Álvaro Palacios pioneered. Terra Alta nearby also good value"},
+  riasbaixas:{title:"🌊 Rías Baixas, Spain",lat:42.4,lng:-8.7,group:'europe',grapes:"Albariño",wines:"Dry, aromatic, saline Albariño",note:"Galicia, northwest Spain. Atlantic + granite = saline mineral character. Val do Salnés largest sub-zone. Same grape as Alvarinho (Portugal)"},
+  jerez:{title:"🍶 Jerez (Sherry), Spain",lat:36.7,lng:-6.1,group:'europe',grapes:"Palomino (dry), Pedro Ximénez, Moscatel",wines:"Fino, Manzanilla, Amontillado, Oloroso, PX, Cream",note:"Jerez Triangle: Jerez de la Frontera, Sanlúcar de Barrameda (Manzanilla), El Puerto de Santa María. Solera system. Albariza chalk soils"},
+  barolo:{title:"👑 Barolo, Piedmont Italy",lat:44.6,lng:7.9,group:'europe',grapes:"Nebbiolo (100%)",wines:"Barolo DOCG (3yr min), Barbaresco DOCG (2yr min), Barbera d'Asti, Moscato d'Asti",note:"Barolo communes: La Morra (elegant), Serralunga (powerful), Castiglione Falletto, Barolo village, Verduno. Roses + tar aroma. Tannins need 10-20yr to soften"},
+  tuscany:{title:"🌿 Tuscany, Italy",lat:43.5,lng:11.2,group:'europe',grapes:"Sangiovese, Cabernet Sauvignon (Super Tuscans)",wines:"Chianti Classico DOCG, Brunello di Montalcino DOCG, Super Tuscans (Sassicaia, Tignanello)",note:"Chianti Classico: 80%+ Sangiovese, Gallo Nero. Brunello = 5yr min. Super Tuscans = IGT with Cabernet/Merlot. Bolgheri coastal (Sassicaia)"},
+  veneto:{title:"🍾 Veneto, Italy",lat:45.4,lng:11.0,group:'europe',grapes:"Glera (Prosecco), Corvina (Amarone), Garganega (Soave)",wines:"Prosecco DOCG (Conegliano Valdobbiadene), Amarone DOCG, Soave",note:"Prosecco: Glera grape, tank method, fresh/fruity. Amarone: appassimento (dried grapes, 90-120 days), powerful 15-16% ABV. Cartizze = top Prosecco hill"},
+  mosel:{title:"🍇 Mosel, Germany",lat:50.0,lng:7.0,group:'europe',grapes:"Riesling",wines:"Kabinett to TBA — Bernkasteler Doctor, Wehlener Sonnenuhr",note:"Steep south-facing slate slopes. Lightest, most delicate German Riesling 7-10% ABV. Key villages: Bernkastel, Wehlen, Piesport, Urzig. JJ Prüm, Egon Müller legendary"},
+  rheingau:{title:"🍇 Rheingau, Germany",lat:50.0,lng:8.0,group:'europe',grapes:"Riesling (dominant), Pinot Noir (Spätburgunder)",wines:"Fuller, drier Riesling — Schloss Johannisberg, Kloster Eberbach",note:"South-facing Rhine slopes. Fuller-bodied drier Rieslings than Mosel. Pfalz: warmer, diverse. Baden: Germany's warmest, excellent Pinot Noir (Spätburgunder)"},
+  douro:{title:"🍷 Douro / Port, Portugal",lat:41.1,lng:-7.5,group:'europe',grapes:"Touriga Nacional, Tinta Roriz (Tempranillo), Touriga Franca",wines:"Port (Ruby/Tawny/LBV/Vintage/White), Douro DOC dry reds",note:"World's oldest demarcated region (1756). Steep schist terraces. Spirit added mid-fermentation = always sweet. 3 sub-zones: Baixo Corgo, Cima Corgo (best Port), Douro Superior"},
+  vinhoverdeminho:{title:"🌿 Vinho Verde / Minho, Portugal",lat:41.7,lng:-8.4,group:'europe',grapes:"Alvarinho, Loureiro, Arinto",wines:"Vinho Verde (light, fresh, slightly sparkling), premium Alvarinho",note:"Northwest Portugal. Monção e Melgaço = best Alvarinho sub-region. Same grape as Albariño. Light, high acid, often 9-11% ABV. Perfect summer wine"},
+  madeira:{title:"🏝 Madeira, Portugal",lat:32.7,lng:-17.0,group:'europe',grapes:"Sercial, Verdelho, Bual, Malmsey, Tinta Negra",wines:"Madeira (Sercial → Verdelho → Bual → Malmsey, dry to sweet)",note:"Volcanic island. Estufagem = heating during production = deliberately oxidised = indestructible. Bottles from 1700s still drinkable"},
+  tokaj:{title:"🍯 Tokaj, Hungary",lat:48.1,lng:21.4,group:'europe',grapes:"Furmint, Hárslevelű",wines:"Tokaji Aszú (3-6 puttonyos), Tokaji Eszencia, Dry Furmint",note:"UNESCO World Heritage. Noble rot on Furmint. One of Europe's oldest great sweet wines. Eszencia: almost syrup, barely fermentable. Dry Furmint increasingly important"},
+  napa:{title:"🍷 Napa Valley, California",lat:38.3,lng:-122.3,group:'americas',grapes:"Cabernet Sauvignon, Chardonnay, Merlot, Zinfandel",wines:"World-class Cabernet, Chardonnay (Carneros), Meritage blends",note:"Sub-AVAs: Rutherford (dusty tannins), Oakville (power + To Kalon), Stags Leap (elegance — 1976 Paris winner), Howell Mountain. 1976 Judgement of Paris put California on world map"},
+  sonoma:{title:"🌿 Sonoma, California",lat:38.5,lng:-122.7,group:'americas',grapes:"Pinot Noir (Russian River Valley), Chardonnay, Zinfandel (Dry Creek), Cabernet",wines:"Russian River Pinot Noir, Dry Creek Zinfandel, Alexander Valley Cabernet",note:"More diverse than Napa. Russian River Valley: cool Pacific fog = elegant Pinot Noir. Dry Creek: old vine Zinfandel. Alexander Valley: warmer Cabernet"},
+  willamette:{title:"🌲 Willamette Valley, Oregon",lat:45.2,lng:-123.0,group:'americas',grapes:"Pinot Noir, Chardonnay, Pinot Gris, Riesling",wines:"Elegant high-acid Pinot Noir",note:"Cool Pacific Northwest. Similar to Burgundy. Sub-AVAs: Dundee Hills (red Jory volcanic soil), Chehalem Mountains, Eola-Amity Hills. Eyrie Vineyards pioneered in 1966"},
+  mendoza:{title:"🏔 Mendoza, Argentina",lat:-33.0,lng:-68.8,group:'americas',grapes:"Malbec, Cabernet Sauvignon, Bonarda, Torrontés",wines:"Mendoza Malbec (Luján de Cuyo, Valle de Uco), Salta Torrontés",note:"Andes 800-1500m. Luján de Cuyo: historic Malbec. Valle de Uco: most elegant, highest altitude. Salta/Cafayate: world's highest vineyards (1700-3000m), Torrontés white"},
+  maipo:{title:"🍷 Chile — Maipo + Colchagua",lat:-33.5,lng:-70.7,group:'americas',grapes:"Cabernet Sauvignon (Maipo), Carmenère (Colchagua), Sauvignon Blanc (Casablanca)",wines:"Maipo Cabernet, Colchagua Carmenère, Casablanca Sauvignon Blanc",note:"Maipo: Cabernet capital. Colchagua: Carmenère (Chile's signature, DNA confirmed 1994). Casablanca: cool Pacific, Sauvignon Blanc + Pinot Noir. Leyda: even cooler coastal"},
+  stellenbosch:{title:"🌿 Stellenbosch, South Africa",lat:-33.9,lng:18.9,group:'africa',grapes:"Cabernet Sauvignon, Syrah, Pinotage, Chenin Blanc (Steen)",wines:"Kanonkop Pinotage, Rust en Vrede Syrah, Vergelegen Cabernet",note:"Most prestigious SA region. Mountain-influenced. Swartland: old vine Chenin Blanc + Grenache/Syrah. Walker Bay: cool maritime Pinot Noir. Constantia: historic, Sauvignon Blanc"},
+  barossa:{title:"🍷 Barossa Valley, Australia",lat:-34.5,lng:138.9,group:'oceania',grapes:"Shiraz (old vine), Grenache, Mourvèdre, Riesling (Eden Valley)",wines:"Penfolds Grange, Henschke Hill of Grace, old vine GSM blends",note:"Some vines 150+ years (pre-phylloxera). Penfolds Grange = Australia's most iconic wine (created 1951). Rich powerful jammy Shiraz. Eden Valley adjacent: benchmark dry Riesling"},
+  clareedenvalley:{title:"🍇 Clare + Eden Valley, Australia",lat:-33.8,lng:138.6,group:'oceania',grapes:"Riesling (dominant), Shiraz, Cabernet Sauvignon",wines:"Benchmark dry Riesling — ages into petrol, honey, toast",note:"Elevated cool valleys in South Australia. Bone dry Riesling unlike Mosel style. Ages magnificently 10-20yr developing TDN petrol/honey notes. Jim Barry, Grosset, Kilikanoon"},
+  coonawarra:{title:"🔴 Coonawarra, Australia",lat:-37.3,lng:140.8,group:'oceania',grapes:"Cabernet Sauvignon, Shiraz",wines:"Australia's benchmark Cabernet Sauvignon",note:"Terra rossa: red clay over limestone. South Australia. Structured elegant Cabernet with cassis, mint, eucalyptus. Penley Estate, Wynns, Balnaves"},
+  margaret:{title:"🌊 Margaret River, Australia",lat:-33.9,lng:115.1,group:'oceania',grapes:"Cabernet Sauvignon, Chardonnay, Sauvignon Blanc, Semillon",wines:"Bordeaux-like Cabernet, complex Chardonnay, SB/Semillon blends",note:"Southwest WA. Maritime Mediterranean climate. Australia's most Bordeaux-like. Vasse Felix, Cullen (biodynamic), Leeuwin Estate (Art Series Chardonnay world-class)"},
+  yarra:{title:"🍃 Yarra Valley, Australia",lat:-37.7,lng:145.5,group:'oceania',grapes:"Pinot Noir, Chardonnay, Shiraz",wines:"Cool climate Pinot Noir, Chardonnay, sparkling wine",note:"Victoria, 45min from Melbourne. Coolest major Victorian region. Elegant Pinot Noir. De Bortoli (Melba), Yering Station, Domaine Chandon sparkling"},
+  marlborough:{title:"🥬 Marlborough, New Zealand",lat:-41.5,lng:174.0,group:'oceania',grapes:"Sauvignon Blanc, Pinot Noir, Pinot Gris, Riesling",wines:"World benchmark Sauvignon Blanc — Cloudy Bay, Brancott, Dog Point",note:"Sub-regions: Wairau Valley (tropical classic), Awatere Valley (mineral/herbaceous). Cloudy Bay 1985 = NZ on world map. High UV intensity from thin ozone layer amplifies aromatics"},
+  centralotago:{title:"🏔 Central Otago, New Zealand",lat:-45.0,lng:169.3,group:'oceania',grapes:"Pinot Noir, Chardonnay, Pinot Gris, Riesling",wines:"World-class fuller Pinot Noir",note:"World's most southerly commercial wine region. Continental climate. High UV. Darker fruit, more body than Marlborough Pinot. Sub-regions: Cromwell Basin, Gibbston, Bannockburn"},
 };
+
+// Map state
+let mapScale = 1;
+let mapOffsetX = 0;
+let mapOffsetY = 0;
+let mapDragging = false;
+let mapDragStart = {x:0,y:0};
+let mapCurrentFilter = 'all';
+let mapCanvas, mapCtx, mapContainer, mapPinsDiv;
+let mapW = 0, mapH = 0;
+const MAP_BG = '#B8D4E8';
+
+// World map path data (simplified but accurate Natural Earth)
+// Using Mercator projection: lng->x, lat->y
+function lngToX(lng){ return (lng + 180) / 360; }
+function latToY(lat){ return (1 - Math.log(Math.tan(lat*Math.PI/180) + 1/Math.cos(lat*Math.PI/180)) / Math.PI) / 2; }
+
+function mapToCanvas(lng, lat){
+  const x = lngToX(lng) * mapW * mapScale + mapOffsetX;
+  const y = latToY(lat) * mapH * mapScale + mapOffsetY;
+  return {x, y};
+}
+
+// Simplified land polygons [lng, lat] arrays
+const LAND = [
+  // North America mainland
+  [[-63,48],[-68,47],[-70,44],[-70,42],[-75,38],[-76,35],[-81,31],[-81,25],[-87,30],[-90,29],[-97,26],[-97,22],[-104,19],[-88,16],[-85,11],[-83,8],[-77,8],[-77,10],[-75,12],[-73,12],[-68,12],[-65,18],[-60,15],[-60,47],[-63,48]],
+  // Alaska
+  [[-140,60],[-168,60],[-168,65],[-160,70],[-142,70],[-140,60]],
+  // Greenland
+  [[-52,60],[-20,62],[-18,77],[-30,83],[-50,83],[-57,76],[-52,60]],
+  // Iceland
+  [[-24,63],[-14,63],[-13,66],[-22,66],[-24,63]],
+  // Caribbean (simplified)
+  [[-77,18],[-77,20],[-72,20],[-72,18],[-77,18]],
+  // South America
+  [[-81,8],[-77,8],[-75,5],[-72,0],[-73,-8],[-70,-18],[-68,-25],[-70,-33],[-72,-40],[-68,-54],[-65,-55],[-56,-53],[-53,-47],[-40,-23],[-35,-9],[-35,-5],[-38,5],[-60,15],[-65,12],[-72,12],[-75,12],[-73,0],[-72,-10],[-68,-18],[-70,-30],[-72,-40],[-68,-55],[-81,8]],
+  // Europe (simplified)
+  [[-9,36],[5,36],[15,37],[26,37],[35,37],[36,41],[32,45],[28,46],[24,47],[22,50],[20,54],[14,54],[10,54],[8,58],[0,60],[-2,52],[-3,48],[-5,44],[-9,39],[-9,36]],
+  // Iberian Peninsula detail
+  [[-9,44],[-8,44],[-3,44],[3,43],[3,41],[0,38],[-2,37],[-7,37],[-9,39],[-9,44]],
+  // UK + Ireland
+  [[-6,50],[-2,50],[1,51],[2,53],[0,58],[-2,58],[-5,58],[-5,54],[-3,52],[-6,50]],
+  [[-10,52],[-6,52],[-6,55],[-10,54],[-10,52]],
+  // Scandinavia
+  [[5,58],[8,58],[15,58],[20,60],[26,70],[25,72],[18,70],[15,58],[5,58]],
+  // Africa
+  [[-5,35],[15,37],[36,30],[43,11],[45,5],[42,-12],[34,-28],[25,-34],[18,-34],[12,-22],[10,-5],[8,5],[0,5],[-5,5],[-14,10],[-17,14],[-17,20],[-13,28],[-5,35]],
+  // Madagascar
+  [[44,-13],[50,-13],[50,-25],[44,-25],[44,-13]],
+  // Middle East
+  [[36,37],[43,37],[57,22],[58,22],[56,14],[45,12],[43,12],[36,18],[37,28],[36,37]],
+  // Asia main
+  [[26,42],[30,42],[40,37],[50,24],[58,22],[62,22],[73,8],[80,8],[80,20],[90,22],[100,0],[104,1],[108,2],[110,2],[112,4],[120,4],[122,26],[130,34],[140,40],[142,48],[140,56],[130,60],[120,62],[100,60],[80,60],[60,56],[46,54],[36,50],[26,42]],
+  // Japan
+  [[130,34],[132,34],[134,36],[136,38],[140,40],[142,40],[142,36],[138,34],[132,32],[130,34]],
+  // Indian subcontinent
+  [[68,22],[80,30],[88,28],[90,26],[88,22],[80,10],[72,8],[68,22]],
+  // Sri Lanka
+  [[80,6],[82,6],[82,8],[80,8],[80,6]],
+  // Southeast Asia
+  [[100,0],[104,1],[108,2],[115,4],[120,4],[118,2],[110,0],[104,-4],[100,2],[100,0]],
+  // Australia
+  [[114,-22],[122,-18],[134,-12],[138,-14],[148,-18],[154,-26],[152,-36],[148,-38],[142,-38],[136,-36],[128,-34],[116,-34],[114,-28],[114,-22]],
+  // New Zealand North
+  [[172,-34],[178,-34],[180,-38],[176,-42],[172,-40],[172,-34]],
+  // New Zealand South
+  [[168,-44],[170,-44],[174,-46],[172,-48],[168,-46],[168,-44]],
+  // Greenland already done above
+  // Svalbard
+  [[16,76],[26,78],[26,80],[16,80],[16,76]],
+  // Japan Hokkaido
+  [[140,42],[146,44],[144,46],[140,44],[140,42]],
+];
+
+function drawMap(){
+  if(!mapCanvas) return;
+  mapCtx.clearRect(0,0,mapW,mapH);
+  // Ocean
+  mapCtx.fillStyle = '#B8D4E8';
+  mapCtx.fillRect(0,0,mapW,mapH);
+  // Equator
+  const eq = mapToCanvas(0,0);
+  mapCtx.beginPath();
+  mapCtx.strokeStyle='rgba(27,42,74,0.1)';
+  mapCtx.lineWidth=0.5;
+  mapCtx.setLineDash([4,3]);
+  mapCtx.moveTo(0,eq.y); mapCtx.lineTo(mapW,eq.y);
+  mapCtx.stroke();
+  mapCtx.setLineDash([]);
+  // Tropics
+  const tc = mapToCanvas(0,23.5); const ta = mapToCanvas(0,-23.5);
+  mapCtx.beginPath();
+  mapCtx.strokeStyle='rgba(27,42,74,0.05)';
+  mapCtx.moveTo(0,tc.y); mapCtx.lineTo(mapW,tc.y);
+  mapCtx.moveTo(0,ta.y); mapCtx.lineTo(mapW,ta.y);
+  mapCtx.stroke();
+  // Draw land
+  LAND.forEach(poly=>{
+    mapCtx.beginPath();
+    poly.forEach((pt,i)=>{
+      const {x,y} = mapToCanvas(pt[0],pt[1]);
+      if(i===0) mapCtx.moveTo(x,y); else mapCtx.lineTo(x,y);
+    });
+    mapCtx.closePath();
+    mapCtx.fillStyle='#D4E0C4';
+    mapCtx.fill();
+    mapCtx.strokeStyle='#A8BF90';
+    mapCtx.lineWidth=0.6;
+    mapCtx.stroke();
+  });
+  // Update pins after draw
+  updatePins();
+}
+
+function updatePins(){
+  if(!mapPinsDiv) return;
+  mapPinsDiv.innerHTML='';
+  Object.entries(MAP_REGIONS).forEach(([id,r])=>{
+    if(mapCurrentFilter !== 'all' && r.group !== mapCurrentFilter) return;
+    const {x,y} = mapToCanvas(r.lng, r.lat);
+    if(x < -10 || x > mapW+10 || y < -10 || y > mapH+10) return;
+    const pin = document.createElement('div');
+    pin.className = 'map-pin';
+    pin.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%);pointer-events:all;cursor:pointer;z-index:10`;
+    const label = r.title.split(',')[0].replace(/[🥂🍷🍇🌿🍾🏔⛰🌊🍶👑🍯🌲🔴🏝🍃🥬]/u,'').trim();
+    pin.innerHTML = `<div onclick="mapRegion('${id}')" style="display:flex;flex-direction:column;align-items:center">
+      <div style="width:10px;height:10px;border-radius:50%;background:#1B2A4A;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>
+      <div style="background:rgba(27,42,74,0.85);color:white;font-size:7px;padding:1px 4px;border-radius:3px;margin-top:1px;white-space:nowrap;max-width:55px;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-family:-apple-system,sans-serif">${label}</div>
+    </div>`;
+    mapPinsDiv.appendChild(pin);
+  });
+}
+
+function mapZoom(factor){
+  const cx = mapW/2, cy = mapH/2;
+  mapOffsetX = cx - (cx - mapOffsetX)*factor;
+  mapOffsetY = cy - (cy - mapOffsetY)*factor;
+  mapScale *= factor;
+  mapScale = Math.max(0.8, Math.min(mapScale, 12));
+  drawMap();
+}
+
+function mapReset(){
+  mapScale=1; mapOffsetX=0; mapOffsetY=0;
+  drawMap();
+  document.getElementById('map-region-detail').style.display='none';
+}
+
+function mapFilter(group, btn){
+  mapCurrentFilter = group;
+  document.querySelectorAll('.map-pill').forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  // Zoom to region
+  const zooms = {
+    europe:{lat:46,lng:10,s:3.5},
+    americas:{lat:10,lng:-70,s:2},
+    oceania:{lat:-30,lng:150,s:2.5},
+    africa:{lat:-28,lng:20,s:3},
+    all:{lat:20,lng:0,s:1}
+  };
+  const z = zooms[group];
+  if(z){
+    mapScale = z.s;
+    const {x,y} = mapToCanvas(z.lng, z.lat);
+    mapOffsetX = mapW/2 - x + mapW/2*(z.s-1)*(z.s===1?0:0);
+    mapOffsetY = mapH/2 - y;
+    // Recalculate with new scale
+    mapScale = 1;
+    mapOffsetX = 0; mapOffsetY = 0;
+    mapScale = z.s;
+    const cx2 = mapW/2, cy2 = mapH/2;
+    const tx = lngToX(z.lng)*mapW, ty = latToY(z.lat)*mapH;
+    mapOffsetX = cx2 - tx*z.s;
+    mapOffsetY = cy2 - ty*z.s;
+  }
+  drawMap();
+}
 
 function mapRegion(id){
   const d = MAP_REGIONS[id];
   if(!d) return;
   const det = document.getElementById('map-region-detail');
   if(!det) return;
-  det.style.display = 'block';
-  document.getElementById('mrd-title').textContent = d.title;
-  document.getElementById('mrd-grapes').innerHTML = '<strong>Grapes:</strong> ' + d.grapes;
-  document.getElementById('mrd-wines').innerHTML = '🍷 ' + d.wines;
-  document.getElementById('mrd-note').textContent = d.note;
-  // Highlight selected marker
-  document.querySelectorAll('#wine-map circle').forEach(c=>{
-    c.setAttribute('opacity', '0.5');
-    c.setAttribute('stroke-width', '1');
-  });
-  const sel = document.getElementById('mr-'+id);
-  if(sel){
-    const c = sel.querySelector('circle');
-    if(c){ c.setAttribute('opacity','1'); c.setAttribute('stroke-width','2'); }
-  }
-  det.scrollIntoView({behavior:'smooth', block:'nearest'});
+  det.style.display='block';
+  document.getElementById('mrd-title').textContent=d.title;
+  document.getElementById('mrd-grapes').innerHTML='<strong>Grapes:</strong> '+d.grapes;
+  document.getElementById('mrd-wines').innerHTML='🍷 '+d.wines;
+  document.getElementById('mrd-note').textContent=d.note;
+  // Zoom to region
+  mapScale = Math.max(mapScale, 3);
+  const cx=mapW/2, cy=mapH/2;
+  const tx=lngToX(d.lng)*mapW, ty=latToY(d.lat)*mapH;
+  mapOffsetX=cx-tx*mapScale; mapOffsetY=cy-ty*mapScale;
+  drawMap();
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function mapClose(){
-  const det = document.getElementById('map-region-detail');
-  if(det) det.style.display = 'none';
-  document.querySelectorAll('#wine-map circle').forEach(c=>{
-    c.setAttribute('opacity','0.9');
-    c.setAttribute('stroke-width','1.5');
-  });
+function mapCloseDetail(){
+  document.getElementById('map-region-detail').style.display='none';
+}
+
+function initMap(){
+  mapCanvas = document.getElementById('map-canvas');
+  mapContainer = document.getElementById('map-container');
+  mapPinsDiv = document.getElementById('map-pins');
+  if(!mapCanvas||!mapContainer) return;
+  mapW = mapContainer.offsetWidth;
+  mapH = mapContainer.offsetHeight || 280;
+  mapCanvas.width = mapW;
+  mapCanvas.height = mapH;
+  mapCanvas.style.width = mapW+'px';
+  mapCanvas.style.height = mapH+'px';
+  mapCtx = mapCanvas.getContext('2d');
+  drawMap();
+  // Touch/mouse pan
+  let lastTouchDist = 0;
+  mapContainer.addEventListener('mousedown',e=>{mapDragging=true;mapDragStart={x:e.clientX-mapOffsetX,y:e.clientY-mapOffsetY};mapContainer.style.cursor='grabbing';});
+  mapContainer.addEventListener('mousemove',e=>{if(!mapDragging)return;mapOffsetX=e.clientX-mapDragStart.x;mapOffsetY=e.clientY-mapDragStart.y;drawMap();});
+  mapContainer.addEventListener('mouseup',()=>{mapDragging=false;mapContainer.style.cursor='grab';});
+  mapContainer.addEventListener('mouseleave',()=>{mapDragging=false;mapContainer.style.cursor='grab';});
+  mapContainer.addEventListener('wheel',e=>{e.preventDefault();const f=e.deltaY<0?1.15:0.87;const mx=e.offsetX,my=e.offsetY;mapOffsetX=mx-(mx-mapOffsetX)*f;mapOffsetY=my-(my-mapOffsetY)*f;mapScale*=f;mapScale=Math.max(0.8,Math.min(mapScale,12));drawMap();},{passive:false});
+  // Touch
+  mapContainer.addEventListener('touchstart',e=>{
+    if(e.touches.length===1){mapDragging=true;mapDragStart={x:e.touches[0].clientX-mapOffsetX,y:e.touches[0].clientY-mapOffsetY};}
+    if(e.touches.length===2){lastTouchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+  },{passive:true});
+  mapContainer.addEventListener('touchmove',e=>{
+    if(e.touches.length===1&&mapDragging){mapOffsetX=e.touches[0].clientX-mapDragStart.x;mapOffsetY=e.touches[0].clientY-mapDragStart.y;drawMap();}
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      const f=d/lastTouchDist; lastTouchDist=d;
+      const mx=(e.touches[0].clientX+e.touches[1].clientX)/2-mapContainer.getBoundingClientRect().left;
+      const my=(e.touches[0].clientY+e.touches[1].clientY)/2-mapContainer.getBoundingClientRect().top;
+      mapOffsetX=mx-(mx-mapOffsetX)*f; mapOffsetY=my-(my-mapOffsetY)*f;
+      mapScale*=f; mapScale=Math.max(0.8,Math.min(mapScale,12));
+      drawMap();
+    }
+  },{passive:true});
+  mapContainer.addEventListener('touchend',()=>{mapDragging=false;});
 }
 
 // ===== ROBERT'S SUGGESTIONS =====
@@ -2486,7 +2382,8 @@ function initRobert(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  initRobert();initFC();});
+  initRobert();
+  setTimeout(initMap, 100);initFC();});
 </script>
 </body>
 </html>
